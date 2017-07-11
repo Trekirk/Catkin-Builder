@@ -2,7 +2,7 @@
     //Forces output to contain ANSI color information (will only display 
     //correctly if additional plugins that allow Sublime Text's build output to 
     //support ANSI color are present)
-    "color": false,  
+    "color": true,  
     //Provides status messages during building           
     "status-updates": true,   
     //Removes information about the workspace setup and other similar details 
@@ -13,7 +13,7 @@
     //all question marks including those that should appear in the text.
     "replace-q": true,     
     //Repeats the first error encountered at the end of the error message.    
-    "repeat-error": true,
+    "repeat-error": false,
     //Builds with debug flag set
     "debug": false   
 }

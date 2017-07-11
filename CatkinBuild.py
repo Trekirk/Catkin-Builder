@@ -11,6 +11,8 @@ import _thread
 import re
 import string
 
+import pprint
+
 
 class ProcessListener(object):
 
@@ -163,6 +165,7 @@ class CatkinBuildCommand(sublime_plugin.WindowCommand, ProcessListener):
         if self.working_dir != "":
             os.chdir(self.working_dir)
 
+
     def genBuildCommand(self):
 
         # create build command
@@ -181,13 +184,26 @@ class CatkinBuildCommand(sublime_plugin.WindowCommand, ProcessListener):
 
         if self.settings.get("debug"):
             build_command.append('--cmake-args -DCMAKE_BUILD_TYPE=Debug')
-
+        build_command = ['catkin', 'build']
         return build_command
 
     def run(self, working_dir="", build_deps=False, env={}, encoding='utf-8', kill=False, **kwargs):
 
         # set inputs
-        self.working_dir = working_dir
+        
+        # command = ['bash', '-c', 'source init_env && env']
+
+        # proc = subprocess.Popen(command, stdout = subprocess.PIPE)
+
+        # for line in proc.stdout:
+        #   (key, _, value) = line.partition("=")
+        #   os.environ[key] = value
+
+        # proc.communicate()
+
+        # pprint.pprint(dict(os.environ))
+        
+        self.working_dir = os.environ["ROS_WORKSPACE"]
         self.build_deps = build_deps
         self.encoding = encoding
 
@@ -235,7 +251,7 @@ class CatkinBuildCommand(sublime_plugin.WindowCommand, ProcessListener):
         # check for issues
         if len(self.err_msg) is not 0:
             print(self.err_msg)
-            self.output_text(proc, self.err_msg)
+            #self.output_text(proc, self.err_msg)
 
         # find first error
         output_err, err_free = self.firstErr(self.out_msg)
@@ -259,6 +275,7 @@ class CatkinBuildCommand(sublime_plugin.WindowCommand, ProcessListener):
         # check error data 
         if is_err:
             self.err_msg += data
+            data += self.err_msg
 
         # check message data
         else:
@@ -274,13 +291,13 @@ class CatkinBuildCommand(sublime_plugin.WindowCommand, ProcessListener):
             # remove junk from output
             trimmed = self.trimOutput(data)
             if self.settings.get("trim-output"):
-                data = trimmed
+                #data = trimmed
             # replace question marks
                 if self.settings.get("replace-q"):
                     data = data.replace('?', '\'')
-
+            data += self.err_msg
             self.output_text(proc, data)
-
+            #self.output_view.run_command("insert", {"characters": self.err_msg})
             self.out_msg += data
 
             #if build line delete it so things keep updating
@@ -299,10 +316,11 @@ class CatkinBuildCommand(sublime_plugin.WindowCommand, ProcessListener):
         # Normalize newlines, Sublime Text always uses a single \n separator
         # in memory.
         text = text.replace('\r\n', '\n').replace('\r', '\n')
-
         # Ignore warning about terminal width
-        if not "NOTICE: Could not determine the width of the terminal." in text:
-            self.output_view.run_command("insert", {"characters": text})
+        if "NOTICE: Could not determine the width of the terminal." in text:
+            text = text.replace("NOTICE: Could not determine the width of the terminal. A default width of 80 will be used. This warning will only be printed once.", "")
+        
+        self.output_view.run_command("insert", {"characters": text})
 
     def trimOutput(self, str_in):
         if self.settings.get("color"):
